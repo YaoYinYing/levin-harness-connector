@@ -22,41 +22,50 @@ have a row, a name and an icon for it.
 
 ## Install
 
+One command, from GitHub:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/YaoYinYing/levin-harness-connector/main/install.sh | sh
+```
+
+It runs `magpie plugin add github:YaoYinYing/levin-harness-connector`, finds the copy magpie
+just installed, pins the Levin Harness model entry magpie may write, and reloads the
+plugin. Run it again any time: it only re-pins.
+
+> First time with a config that has no magpie entry in it? Quit Levin Harness and run it
+> with `-- --create` (it appends one entry, keeping a `config.json.bak-…`), or add a
+> model in Levin Harness with base URL `http://localhost:3425/v1` and run it again.
+> `-- --list` only prints the entries and their ids.
+
+Then, in the **magpie window** → *Agents* → the Levin Harness row → pick a model.
+Levin Harness reads its model when a session starts, so send the next message or open
+a new chat.
+
+Why the pin needs a normal shell: it reads and writes Levin Harness's `config.json`, which
+macOS protects. Run the script from Terminal (with Full Disk Access if it asks),
+not from inside an app sandbox.
+
+### By hand
+
 ```sh
 git clone https://github.com/YaoYinYing/levin-harness-connector.git
 cd levin-harness-connector
 magpie plugin add .
+node tools/pin-slot.mjs          # --list first, if you want to see the entries
 ```
 
-Then pick the Levin Harness model entry magpie may write:
-
-```sh
-node tools/pin-slot.mjs --list    # Levin's model entries and their ids
-node tools/pin-slot.mjs           # pin the entry that already goes to magpie
-```
-
-`--list` and the pin need to read `~/Library/Application Support/Levin Harness/config.json`,
-which macOS protects: run them from a terminal with **Full Disk Access**, or
-from a normal (non-sandboxed) shell. If no entry goes to magpie yet:
-
-```sh
-# quit Levin first: this appends one entry to its config
-node tools/pin-slot.mjs --create
-```
-
-Then, in the **magpie window** → *Agents* → the Levin Harness row → pick a model.
-Levin Harness reads its model when a session starts, so send the next message
-or open a new chat. magpie writes Levin Harness's config from its own process,
-so this step has the file access a sandboxed shell may not.
+or, without cloning, `magpie plugin add github:YaoYinYing/levin-harness-connector`
+and then run `node tools/pin-slot.mjs` inside the installed copy, which lives at
+`~/.config/magpie/plugins/node_modules/levin-harness-connector`.
 
 Disconnect: pick Levin Harness's previous model in that row, or
 
 ```sh
-magpie levin-harness default
+magpie levin-harness-connector default
 ```
 
-Levin Harness's `config.json` comes back byte for byte (magpie stashes each key
-it wrote; verified in a sandbox).
+Levin Harness's `config.json` comes back byte for byte (magpie stashes each key it wrote;
+verified in a sandbox).
 
 ## Why `pin-slot` exists
 

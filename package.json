@@ -9,6 +9,7 @@
     "icon-data.js",
     "icon.png",
     "tools/pin-slot.mjs",
+    "install.sh",
     "README.md",
     "LICENSE"
   ],
@@ -36,5 +37,8 @@
       "en": "Levin Harness as its own Agent row in magpie: its own name, icon and usage attribution.",
       "zh": "把 Levin Harness 作为独立一行加进 magpie 的 Agent 页：用自己的名称、图标和用量归因。"
     }
+  },
+  "bin": {
+    "levin-harness-connector-install": "./install.sh"
   }
 }
