@@ -22,46 +22,81 @@ have a row, a name and an icon for it.
 
 ## Install
 
-One command, from GitHub:
+magpie installed from a **.dmg** is an app: its command line lives at
+`/Applications/magpie.app/Contents/MacOS/magpie` and `magpie` is usually **not
+on PATH**. The script below finds it there, so plain shell commands are enough.
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/YaoYinYing/levin-harness-connector/main/install.sh | sh
 ```
 
-It runs `magpie plugin add github:YaoYinYing/levin-harness-connector`, finds the copy magpie
-just installed, pins the Levin Harness model entry magpie may write, and reloads the
-plugin. Run it again any time: it only re-pins.
+It:
 
-> First time with a config that has no magpie entry in it? Quit Levin Harness and run it
-> with `-- --create` (it appends one entry, keeping a `config.json.bak-…`), or add a
-> model in Levin Harness with base URL `http://localhost:3425/v1` and run it again.
-> `-- --list` only prints the entries and their ids.
+1. finds magpie on PATH, then in `/Applications/magpie.app` and `~/Applications/magpie.app`
+   (override with `MAGPIE=/path/to/magpie.app/Contents/MacOS/magpie`);
+2. runs `plugin add github:YaoYinYing/levin-harness-connector`;
+3. finds the copy magpie just installed under `~/.config/magpie/plugins/node_modules/`;
+4. pins the Levin Harness model entry magpie may write, by its id;
+5. turns the plugin off and on so the new pin is read.
+
+Run it again any time — it only re-pins.
+
+| flag | what it does |
+| --- | --- |
+| `--link` | also symlinks `~/.local/bin/magpie` → the app's own binary, so `magpie …` works in a shell |
+| `--create` | no usable entry yet: append one to Levin Harness's config first (**quit Levin Harness**), keeping a `config.json.bak-…` |
+| `--list` | print Levin Harness's model entries and their ids, then stop |
+
+Two loose ends worth knowing:
+
+- With `curl … | sh` a flag goes to the script like this:
+  `curl -fsSL …/install.sh | sh -s -- --link`.
+- If `~/.local/bin` is not on your PATH, add it (`export PATH="$HOME/.local/bin:$PATH"`
+  in `~/.zshrc`) to use plain `magpie` afterwards. magpie's own app never needs this.
+
+### The plain-`magpie` alternative
+
+The app window can add the plugin without any shell: **Plugins → add plugin**,
+paste
+
+```
+https://github.com/YaoYinYing/levin-harness-connector
+```
+
+The pin still needs a terminal (only Node can read Levin Harness's `config.json`):
+
+```sh
+node ~/.config/magpie/plugins/node_modules/levin-harness-connector/tools/pin-slot.mjs
+/Applications/magpie.app/Contents/MacOS/magpie plugin off levin-harness-connector
+/Applications/magpie.app/Contents/MacOS/magpie plugin on levin-harness-connector
+```
 
 Then, in the **magpie window** → *Agents* → the Levin Harness row → pick a model.
 Levin Harness reads its model when a session starts, so send the next message or open
 a new chat.
 
 Why the pin needs a normal shell: it reads and writes Levin Harness's `config.json`, which
-macOS protects. Run the script from Terminal (with Full Disk Access if it asks),
-not from inside an app sandbox.
+macOS protects. Run it from Terminal (with Full Disk Access if it asks), not
+from inside an app sandbox.
 
 ### By hand
 
 ```sh
 git clone https://github.com/YaoYinYing/levin-harness-connector.git
 cd levin-harness-connector
-magpie plugin add .
+MAGPIE=/Applications/magpie.app/Contents/MacOS/magpie
+"$MAGPIE" plugin add .
 node tools/pin-slot.mjs          # --list first, if you want to see the entries
 ```
 
-or, without cloning, `magpie plugin add github:YaoYinYing/levin-harness-connector`
-and then run `node tools/pin-slot.mjs` inside the installed copy, which lives at
+or, without cloning, add the GitHub link in the app (*Plugins → add plugin*) and run
+`node tools/pin-slot.mjs` inside the installed copy at
 `~/.config/magpie/plugins/node_modules/levin-harness-connector`.
 
 Disconnect: pick Levin Harness's previous model in that row, or
 
 ```sh
-magpie levin-harness-connector default
+magpie levin-harness-connector default        # /Applications/magpie.app/Contents/MacOS/magpie …
 ```
 
 Levin Harness's `config.json` comes back byte for byte (magpie stashes each key it wrote;
