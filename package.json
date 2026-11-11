@@ -1,0 +1,40 @@
+{
+  "name": "levin-harness-connector",
+  "version": "0.1.0",
+  "description": "magpie agent plugin: Levin Harness as its own row in magpie's Agents page, with its own name, icon and usage attribution",
+  "type": "module",
+  "files": [
+    "agent.js",
+    "slot.js",
+    "icon-data.js",
+    "icon.png",
+    "tools/pin-slot.mjs",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "magpie",
+    "magpie-plugin",
+    "levin-harness"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YaoYinYing/levin-harness-connector.git"
+  },
+  "homepage": "https://github.com/YaoYinYing/levin-harness-connector#readme",
+  "bugs": {
+    "url": "https://github.com/YaoYinYing/levin-harness-connector/issues"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "magpie": {
+    "agent": "./agent.js",
+    "name": "Levin Harness",
+    "summary": {
+      "en": "Levin Harness as its own Agent row in magpie: its own name, icon and usage attribution.",
+      "zh": "把 Levin Harness 作为独立一行加进 magpie 的 Agent 页：用自己的名称、图标和用量归因。"
+    }
+  }
+}
