@@ -10,6 +10,7 @@
     "icon.png",
     "tools/pin-slot.mjs",
     "install.sh",
+    "install.ps1",
     "README.md",
     "LICENSE"
   ],

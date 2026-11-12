@@ -7,6 +7,8 @@
 #   sh install.sh --list           only list the entries and their ids
 #   sh install.sh --link           also put a `magpie` command on PATH (~/.local/bin/magpie)
 #
+# macOS, Linux and WSL. On Windows run install.ps1 instead.
+#
 # Why a script at all: magpie runs agent plugins in moejs, with no fs and no
 # process.env, so a plugin cannot look at Levin's config to find out which entry
 # to write — and magpie's JSON editor only replaces key paths that already
@@ -48,13 +50,16 @@ resolve_magpie() {
     printf '%s' "$MAGPIE"
     return
   fi
-  if command -v magpie >/dev/null 2>&1; then
-    command -v magpie
-    return
-  fi
+  for cmd in magpie magpie-cli; do
+    if command -v "$cmd" >/dev/null 2>&1; then
+      command -v "$cmd"
+      return
+    fi
+  done
   for app in "$HOME/Applications/magpie.app" /Applications/magpie.app \
     /Applications/Magpie.app "$HOME/Applications/Magpie.app" \
-    /Applications/Utilities/magpie.app /opt/homebrew/bin/magpie /usr/local/bin/magpie; do
+    /Applications/Utilities/magpie.app /opt/homebrew/bin/magpie /usr/local/bin/magpie \
+    "$HOME/.local/bin/magpie" "$HOME/.local/bin/magpie-cli"; do
     if [ -x "$app/Contents/MacOS/magpie" ]; then
       printf '%s' "$app/Contents/MacOS/magpie"
       return
@@ -66,6 +71,8 @@ resolve_magpie() {
   done
   return 1
 }
+
+command -v node >/dev/null 2>&1 || die "node is not on PATH — install Node.js 18 or newer, then run this again"
 
 if ! MAGPIE=$(resolve_magpie); then
   die "no magpie found. Looked on PATH, then in /Applications/magpie.app and

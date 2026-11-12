@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 // Pin which Levin Harness model entry magpie may write, into slot.js.
 //
-// magpie's agent plugins can write only key paths that already exist, so this
-// plugin needs the id of one entry in Levin Harness's `llmConfigs` array — an id,
-// not an index, because Levin Harness keeps ids stable when models are reordered.
-// This tool finds that id, checks it is really there, and writes it into
-// slot.js.
+// magpie's agent plugins can write only key paths that already exist, and they
+// cannot read a file, so the two things they need about Levin Harness's config
+// have to be written into slot.js by something that can: which file it is, and
+// the id of the one entry magpie may write. An id, not an index, because
+// Levin Harness keeps ids stable when models are reordered.
 //
 //   node tools/pin-slot.mjs                 pin the entry that goes to magpie's gateway
 //   node tools/pin-slot.mjs --id <id>       pin one entry by its id
@@ -13,6 +13,13 @@
 //   node tools/pin-slot.mjs --create        add such an entry first (Levin Harness closed)
 //   node tools/pin-slot.mjs --config <path> read another config.json (testing)
 //   node tools/pin-slot.mjs --dry-run       show what it would do
+//
+// Levin's config is looked for where Levin puts it on this platform:
+//
+//   macOS    ~/Library/Application Support/Levin Harness/config.json
+//   Windows  %APPDATA%\levin-harness\config.json
+//   Linux    $XDG_CONFIG_HOME/levin-harness/config.json, else ~/.config/…
+//   any      $LEVIN_HARNESS_CONFIG_DIR/config.json, which Levin honours first
 //
 // Without --create it never writes Levin Harness's config.json. With --create it
 // appends one entry textually — every other byte of the file stays as it was,
@@ -34,18 +41,58 @@ const value = (name) => {
 };
 
 const slot = await import(pathToFileURL(slotPath).href);
-const CONFIG = (value("--config") ?? slot.CONFIG).replace(/^~(?=$|\/)/, homedir());
 const NAME = slot.NAME;
 const GATEWAY_PORT = "3425";
+const CONFIG = resolveConfig(value("--config") ?? slot.CONFIG);
+
+// resolveConfig is the file Levin keeps its models in: --config, then whatever
+// slot.js was pinned to, then the paths Levin itself uses on this platform.
+function resolveConfig(pinned) {
+  if (pinned) return expand(pinned);
+  for (const p of configCandidates()) {
+    try {
+      readFileSync(p);
+      return p;
+    } catch {}
+  }
+  return configCandidates()[0];
+}
+
+function configCandidates() {
+  const home = homedir();
+  const out = [];
+  const envDir = process.env.LEVIN_HARNESS_CONFIG_DIR;
+  if (envDir) out.push(join(expand(envDir), "config.json"));
+  if (process.platform === "darwin") {
+    out.push(join(home, "Library", "Application Support", "Levin Harness", "config.json"));
+  } else if (process.platform === "win32") {
+    const appData = process.env.APPDATA || join(home, "AppData", "Roaming");
+    out.push(join(appData, "levin-harness", "config.json"));
+  } else {
+    const xdg = process.env.XDG_CONFIG_HOME || join(home, ".config");
+    out.push(join(xdg, "levin-harness", "config.json"));
+  }
+  return out;
+}
+
+// expand reads ~ and %VAR% (Windows) or $VAR, as a shell would.
+function expand(p) {
+  return p
+    .replace(/^~(?=$|[\\/])/, homedir())
+    .replace(/%([A-Za-z_][A-Za-z0-9_]*)%/g, (m, k) => process.env[k] ?? m);
+}
 
 let raw;
 try {
   raw = readFileSync(CONFIG, "utf8");
 } catch (err) {
+  const where = configCandidates().join("\n  ");
   fail(
-    `cannot read ${CONFIG}: ${err.message}\n` +
-      `That is macOS's file protection, not a missing file: run this from magpie's\n` +
-      `folder in a terminal with Full Disk Access, or from a normal shell outside a sandbox.`,
+    `cannot read ${CONFIG}: ${err.message}\n\n` +
+      `Looked for Levin's config at:\n  ${where}\n\n` +
+      `If Levin keeps it elsewhere, name it:  node tools/pin-slot.mjs --config "<path>"\n` +
+      `On macOS a sandboxed shell cannot read it even though it is there: run this\n` +
+      `in Terminal (Full Disk Access if it asks), not from inside an app.`,
   );
 }
 const config = JSON.parse(raw);
@@ -149,23 +196,26 @@ writeSlot(id, chosen);
 
 function writeSlot(entryId, index) {
   const src = readFileSync(slotPath, "utf8");
-  if (new RegExp(`^export const ENTRY_ID = ${JSON.stringify(entryId)};$`, "m").test(src)) {
-    console.log(`${basename(slotPath)} already pins that entry`);
+  if (!/^export const ENTRY_ID = .*;$/m.test(src) || !/^export const CONFIG = .*;$/m.test(src)) {
+    fail(`${slotPath}: needs an "export const CONFIG = …;" and an "export const ENTRY_ID = …;" line`);
+  }
+  // Both belong to this machine, not to the repository: the config's path is
+  // where Levin keeps it here, and the id is an entry in that file.
+  const out = src
+    .replace(/^export const CONFIG = .*;$/m, `export const CONFIG = ${JSON.stringify(CONFIG)};`)
+    .replace(/^export const ENTRY_ID = .*;$/m, `export const ENTRY_ID = ${JSON.stringify(entryId)};`);
+  if (out === src) {
+    console.log(`${basename(slotPath)} already pins llmConfigs[${index}] (${entryId})`);
     return;
   }
-  const out = src.replace(
-    /^export const ENTRY_ID = .*;$/m,
-    `export const ENTRY_ID = ${JSON.stringify(entryId)};`,
-  );
-  if (out === src) fail(`${slotPath}: no "export const ENTRY_ID = …;" line to rewrite`);
   if (flag("--dry-run")) {
-    console.log(`would rewrite ${basename(slotPath)}: ENTRY_ID = ${entryId}`);
+    console.log(`would rewrite ${basename(slotPath)}: CONFIG = ${CONFIG}, ENTRY_ID = ${entryId}`);
     return;
   }
   writeFileSync(slotPath, out);
-  console.log(`${basename(slotPath)} now pins ${entryId} (llmConfigs[${index}])`);
-  // The pin belongs to this machine, not to the repository: keep it out of
-  // `git status` and out of `git pull`'s way. Only touches this clone.
+  console.log(`${basename(slotPath)} now pins ${entryId} (llmConfigs[${index}]) of ${CONFIG}`);
+  // A local pin must not show up in `git status` or block `git pull`. Only
+  // touches this clone.
   if (inGitWorkTree()) {
     const r = spawnSync("git", ["update-index", "--skip-worktree", slotPath], { cwd: here });
     if (r.status === 0) {

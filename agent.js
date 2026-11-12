@@ -15,11 +15,12 @@
 import { ENTRY_ID, CONFIG, NAME } from "./slot.js";
 import { ICON } from "./icon-data.js";
 
-if (!ENTRY_ID) {
+if (!ENTRY_ID || !CONFIG) {
   throw new Error(
-    "Levin Harness: no model entry pinned yet — in this plugin's folder run " +
-      "`node tools/pin-slot.mjs --create` once (Levin Harness closed). It adds a " +
-      'model entry named "Levin Harness" and pins its id here. Nothing is written until then.',
+    "Levin Harness: not pinned yet — run install.ps1 (Windows) or install.sh (macOS, Linux), " +
+      "or `node tools/pin-slot.mjs --create` in this plugin's folder once (Levin Harness closed). " +
+      "It writes which of Levin's model entries magpie may use into slot.js. " +
+      "Nothing is written until then.",
   );
 }
 
@@ -37,7 +38,9 @@ export const agent = {
   icon: ICON,
   // Levin Harness's own User-Agent, for a call that skips the key magpie wrote
   ua: ["levin", "levin-harness"],
-  dir: "~/Library/Application Support/Levin Harness",
+  // the folder Levin is installed in, worked out from the config path the pin
+  // tool wrote: magpie uses dir only to tell whether the app is installed
+  dir: dirOf(CONFIG),
   notice:
     "Levin Harness reads the model when a chat starts: send the next message, or open a new chat.",
 };
@@ -58,4 +61,11 @@ export function connect({ gateway, model }) {
   if (model && model.output > 0) out[at("maxTokens")] = model.output;
   if (model && typeof model.images === "boolean") out[at("supportsImageInput")] = model.images;
   return out;
+}
+
+// dirOf is the folder a config file sits in, in the spelling magpie expands
+// (~ and $VAR); Windows paths are given as they are.
+function dirOf(file) {
+  const cut = Math.max(file.lastIndexOf("/"), file.lastIndexOf("\\"));
+  return cut > 0 ? file.slice(0, cut) : file;
 }
