@@ -69,11 +69,12 @@ Where it looks for magpie: PATH, then `%LOCALAPPDATA%\Programs\magpie\`,
 `%USERPROFILE%\magpie\`, and the release downloads in `%USERPROFILE%\Downloads\`.
 Point it somewhere else with `-Magpie "C:\path\to\magpie.exe"`.
 
-Levin Harness keeps its config at `%APPDATA%\levin-harness\config.json` on Windows
-(`pin-slot.mjs` looks there; `-List` prints what it found). **Use PowerShell, not
-Git Bash**, for the pin: only PowerShell gets the `%APPDATA%` path spelling Levin Harness
-itself uses. WSL is a separate machine to magpie — run the Windows script, not
-`install.sh`, if magpie runs on Windows.
+Levin Harness keeps its config at `%APPDATA%\levin-harness\config.json`; `pin-slot.mjs` looks
+there because the Windows `node.exe` reports `platform === "win32"`. Run the pin
+from **PowerShell** (or cmd) with the Windows Node — from Git Bash it also works,
+since Node still reports win32, but not through a WSL `node`, which reports
+linux. If magpie runs on Windows, use the Windows script: WSL is a separate
+machine to magpie.
 
 `-Link` writes `%LOCALAPPDATA%\Microsoft\WindowsApps\magpie.cmd`, which is already on
 PATH: no new folder to add, and it survives moving `magpie.exe`.
@@ -101,6 +102,18 @@ wins over both, and the script honours it.
 
 With `curl … | sh` a flag goes to the script like this:
 `curl -fsSL …/install.sh | sh -s -- --link`.
+
+### Where each side keeps its files
+
+| | Levin Harness's `config.json` | magpie's plugins |
+| --- | --- | --- |
+| macOS | `~/Library/Application Support/Levin Harness/config.json` | `~/.config/magpie/plugins/node_modules/` |
+| Windows | `%APPDATA%\levin-harness\config.json` | `%USERPROFILE%\.config\magpie\plugins\node_modules\` |
+| Linux | `$XDG_CONFIG_HOME/levin-harness/config.json`, else `~/.config/levin-harness/` | `~/.config/magpie/plugins/node_modules/` |
+
+On every platform `$LEVIN_HARNESS_CONFIG_DIR/config.json` wins if it is set (Levin Harness
+honours it too), and `pin-slot.mjs --config <path>` overrides everything. When it
+cannot find the file, it prints every path it tried.
 
 ### Then, in the app
 
