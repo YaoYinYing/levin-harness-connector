@@ -27,7 +27,7 @@
 import { readFileSync, writeFileSync, copyFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { homedir } from "node:os";
-import { basename, dirname, join } from "node:path";
+import { basename, dirname, isAbsolute, join, relative } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -202,7 +202,7 @@ function writeSlot(entryId, index) {
   // Both belong to this machine, not to the repository: the config's path is
   // where Levin keeps it here, and the id is an entry in that file.
   const out = src
-    .replace(/^export const CONFIG = .*;$/m, `export const CONFIG = ${JSON.stringify(CONFIG)};`)
+    .replace(/^export const CONFIG = .*;$/m, `export const CONFIG = ${JSON.stringify(portable(CONFIG))};`)
     .replace(/^export const ENTRY_ID = .*;$/m, `export const ENTRY_ID = ${JSON.stringify(entryId)};`);
   if (out === src) {
     console.log(`${basename(slotPath)} already pins llmConfigs[${index}] (${entryId})`);
@@ -224,6 +224,15 @@ function writeSlot(entryId, index) {
     }
   }
   console.log(`In magpie: Plugins → installed → this plugin off, then on.`);
+}
+
+// portable spells a path under this user's home with a leading ~, the way
+// magpie expands it, so the pin reads the same as Levin's own docs.
+function portable(p) {
+  const home = homedir();
+  const rel = relative(home, p);
+  if (!rel.startsWith("..") && !isAbsolute(rel)) return join("~", rel);
+  return p;
 }
 
 function backup(path) {
