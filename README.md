@@ -22,12 +22,12 @@ have a row, a name and an icon for it.
 
 ## Install
 
-**macOS only, because Lévin Harness is macOS only.** The installer adds the
-plugin to magpie, finds the copy magpie installed, pins which of Lévin's model
-entries magpie may write, and reloads the plugin. Running it again only re-pins.
+Lévin Harness ships for macOS and Windows; the installer adds the plugin to
+magpie, finds the copy magpie installed, pins which of Lévin's model entries
+magpie may write, and reloads the plugin. Running it again only re-pins.
 
-The Windows and Linux sections below are preparation for the day Lévin ships
-there; they cannot do anything today.
+Linux has no Lévin build in the releases checked on 2026-11-12, so that section
+is preparation only.
 
 ### macOS
 
@@ -43,19 +43,16 @@ Needs Node.js 18+ (`node --version`). Run it in Terminal, not inside another
 app's sandbox: macOS blocks a sandboxed process from reading Levin Harness's
 `config.json`.
 
-### Windows — prepared, but nothing to connect yet
+### Windows
 
-**Lévin Harness is macOS-only today.** Its install docs offer an Apple silicon
-`.dmg` and nothing else, and its Terms of Service say the current version
-supports macOS with other platforms only planned. There is therefore no Lévin
-on Windows for this plugin to point at: `install.ps1` below is written and
-reviewed, but untested on Windows and useless until a Windows build of Lévin
-exists. If you are on Windows, this plugin cannot help you yet.
+Lévin Harness has a Windows build: the GitHub releases carry
+`Levin-Harness-<version>-x64.exe` next to the arm64 `.dmg`. Install that first,
+then run the script below — it has **not** been run on a real Windows machine
+yet, so treat it as reviewed-but-unproven.
 
-What is already in place, for the day that build ships: magpie on Windows is
-`magpie.exe` (the app) or `magpie-cli.exe` (the command line build). Neither is
-on PATH unless you put it there, so the script looks in the usual places and in
-your Downloads folder.
+magpie on Windows is `magpie.exe` (the app) or `magpie-cli.exe` (the command line
+build). Neither is on PATH unless you put it there, so the script looks in the
+usual places and in your Downloads folder.
 
 In **PowerShell**:
 
@@ -90,15 +87,15 @@ machine to magpie.
 `-Link` writes `%LOCALAPPDATA%\Microsoft\WindowsApps\magpie.cmd`, which is already on
 PATH: no new folder to add, and it survives moving `magpie.exe`.
 
-### Linux — also no Lévin build yet
+### Linux (and WSL)
 
-Same story: no Lévin Harness release exists for Linux, so there is nothing to
-point at. `install.sh` already handles a Linux Lévin (it looks for
-`$XDG_CONFIG_HOME/levin-harness/config.json`, else `~/.config/levin-harness/`),
+No Lévin Harness build for Linux appears in the releases checked on 2026-11-12,
+so there is nothing to point at yet. `install.sh` already looks in
+`$XDG_CONFIG_HOME/levin-harness/config.json` and `~/.config/levin-harness/`,
 which is preparation, not support.
 
-WSL is a separate machine to magpie. If magpie runs on Windows, a Lévin in WSL
-would be a different install to the one magpie sees; keep to one side.
+WSL is a separate machine to magpie: a Lévin inside WSL is not the install
+magpie sees on Windows.
 
 ### What the installers pass on
 
@@ -116,11 +113,11 @@ With `curl … | sh` a flag goes to the script like this:
 
 ### Where each side keeps its files
 
-| | Lévin released? | Lévin's `config.json` | magpie's plugins |
+| | Lévin build | Lévin's `config.json` | magpie's plugins |
 | --- | --- | --- | --- |
-| macOS | yes | `~/Library/Application Support/Levin/config.json` | `~/.config/magpie/plugins/node_modules/` |
-| Windows | **no** | `%APPDATA%\levin-harness\config.json` (for a future build) | `%USERPROFILE%\.config\magpie\plugins\node_modules\` |
-| Linux | **no** | `$XDG_CONFIG_HOME/levin-harness/config.json`, else `~/.config/levin-harness/` (for a future build) | `~/.config/magpie/plugins/node_modules/` |
+| macOS | arm64 `.dmg` | `~/Library/Application Support/Levin/config.json` | `~/.config/magpie/plugins/node_modules/` |
+| Windows | `x64.exe` | `%APPDATA%\levin-harness\config.json` (by Lévin's own code, unverified on Windows) | `%USERPROFILE%\.config\magpie\plugins\node_modules\` |
+| Linux | none in the releases checked | `$XDG_CONFIG_HOME/levin-harness/config.json`, else `~/.config/levin-harness/` (preparation) | `~/.config/magpie/plugins/node_modules/` |
 
 On every platform `$LEVIN_HARNESS_CONFIG_DIR/config.json` wins if it is set (Levin Harness
 honours it too), and `pin-slot.mjs --config <path>` overrides everything. When it

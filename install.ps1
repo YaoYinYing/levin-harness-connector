@@ -1,10 +1,9 @@
 # Install Levin for magpie from GitHub in one command, and pin the model entry
 # magpie may write. Windows.
 #
-# NOTE: there is no Windows build of Levin Harness yet — its install docs offer
-# an Apple silicon .dmg and its Terms of Service say macOS only, other platforms
-# planned. This script is written for the day that build ships; it has never run
-# on Windows, and on a machine without Levin it cannot do anything useful.
+# Lévin Harness has a Windows build: the GitHub releases carry
+# Levin-Harness-<version>-x64.exe. Install that first. This script has not been
+# run on a real Windows machine yet — it is reviewed, not proven.
 #
 #   powershell -ExecutionPolicy Bypass -File install.ps1
 #   powershell -ExecutionPolicy Bypass -File install.ps1 -Create

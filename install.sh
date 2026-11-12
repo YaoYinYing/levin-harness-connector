@@ -7,9 +7,9 @@
 #   sh install.sh --list           only list the entries and their ids
 #   sh install.sh --link           also put a `magpie` command on PATH (~/.local/bin/magpie)
 #
-# macOS only, in practice: Levin Harness ships an Apple silicon .dmg and no
-# Linux build (its Terms of Service say macOS, other platforms planned). The
-# Linux paths below are preparation for that build. On Windows see install.ps1.
+# macOS works today. Levin Harness also ships a Windows build (install.ps1);
+# no Linux build appears in the releases checked on 2026-11-12, so the Linux
+# paths below are preparation for one.
 #
 # Why a script at all: magpie runs agent plugins in moejs, with no fs and no
 # process.env, so a plugin cannot look at Levin's config to find out which entry
